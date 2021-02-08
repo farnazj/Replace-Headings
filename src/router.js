@@ -6,12 +6,12 @@ import Login from './views/Login.vue'
 // import ForgotPassword from './views/ForgotPassword.vue'
 // import ResetPassword from './views/ResetPassword.vue'
 // import VerifyAccount from './views/VerifyAccount.vue'
-// import Sources from './views/Sources.vue'
+import Sources from './views/Sources.vue'
 // import Settings from './views/Settings.vue'
 // import Profile from './views/Profile.vue'
 // import Invalid from './views/Invalid.vue'
 // import SinglePost from './views/SinglePost.vue'
-// import store from './store/store'
+import store from './store/store'
 
 Vue.use(Router)
 
@@ -36,14 +36,14 @@ let router = new Router({
 //         requiresAuth: true
 //       }
 //     },
-//     {
-//       path: '/sources',
-//       name: 'sources',
-//       component: Sources,
-//       meta: {
-//         requiresAuth: true
-//       }
-//     },
+    {
+      path: '/sources',
+      name: 'sources',
+      component: Sources,
+      meta: {
+        requiresAuth: true
+      }
+    },
 //     {
 //       path: '/settings',
 //       name: 'settings',
@@ -61,11 +61,11 @@ let router = new Router({
 //         requiresAuth: true
 //       }
 //     },
-//     {
-//       path: '/login',
-//       name: 'login',
-//       component: Login
-//     },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login
+    },
 //     {
 //       path: '/signup',
 //       name: 'signup',
@@ -96,32 +96,36 @@ let router = new Router({
 //         requiresAuth: true
 //       }
 //     },
-//     {
-//       path: '/about',
-//       name: 'about',
-//       // route level code-splitting
-//       // this generates a separate chunk (about.[hash].js) for this route
-//       // which is lazy-loaded when the route is visited.
-//       component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
-//     },
+    {
+      path: '/about',
+      name: 'about',
+      // route level code-splitting
+      // this generates a separate chunk (about.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import(/* webpackChunkName: "about" */ './views/About.vue'),
+      meta: {
+        requiresAuth: true
+        }
+    },
     {
       path: '*',
-      component: Login
+      component: Sources
     }
   ]
 })
 
-// router.beforeEach((to, from, next) => {
-//   if(to.matched.some(record => record.meta.requiresAuth)) {
-//     if (store.getters['auth/isLoggedIn']) {
-//       next();
-//       window.scrollTo(0, 0);
-//       return;
-//     }
-//     next('/login');
-//   } else {
-//     next();
-//   }
-// })
+router.beforeEach((to, from, next) => {
+  if(to.matched.some(record => record.meta.requiresAuth)) {
+    if (store.getters['auth/isLoggedIn']) {
+      next();
+      window.scrollTo(0, 0);
+      return;
+    }
+    else
+        next('/login');
+  } else {
+    next();
+  }
+})
 
 export default router;

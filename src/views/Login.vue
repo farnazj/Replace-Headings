@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <!-- <custom-toolbar></custom-toolbar> -->
+    <custom-toolbar></custom-toolbar>
 
     <v-row class="pt-5 full-height" justify="center" align="center" no-gutters fill-height>
       <v-col xs="10" sm="8" md="6" lg="4">
@@ -63,12 +63,12 @@
 </template>
 
 <script>
-// import customToolbar from '@/components/CustomToolbar'
+import customToolbar from '@/components/CustomToolbar'
 
 export default {
-  // components: {
-  //   'custom-toolbar': customToolbar
-  // },
+  components: {
+    'custom-toolbar': customToolbar
+  },
   data(){
     return {
       username : "",
@@ -82,18 +82,19 @@ export default {
      let username = this.username;
      let password = this.password;
      console.log(username, password)
-    //  this.$store.dispatch('auth/login',
-    //   {
-    //     'username': username,
-    //     'password': password
-    //   })
-    //   .then(() => {
-    //     this.$router.push('/');
-    //   })
-    //   .catch(err => {
-    //     this.alertMessage = err.response.data.message;
-    //     this.alert = true;
-    //   })
+     this.$router.push('/about');
+     this.$store.dispatch('auth/login',
+      {
+        'username': username,
+        'password': password
+      })
+      .then(() => {
+        this.$router.push('/about');
+      })
+      .catch(err => {
+        this.alertMessage = err.response.data.message;
+        this.alert = true;
+      })
     },
     goToSignup: function() {
       this.$router.push({ name: 'signup' });
