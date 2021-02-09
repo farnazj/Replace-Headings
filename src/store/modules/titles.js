@@ -1,4 +1,5 @@
 import titleServices from '@/services/titleServices'
+import utils from '@/services/utils'
 
 export default {
   namespaced: true,
@@ -20,10 +21,6 @@ export default {
     //   state.customTitlesVisible = visibility;
     // },
 
-    // populate_titles: (state, titles) => {
-    //   state.titles = titles;
-    // },
-
     // set_history_visibility: (state, visiblity) => {
     //   state.historyVisiblity = visiblity;
     // },
@@ -33,8 +30,9 @@ export default {
     //   state.titleHistory= payload.history;
     //   state.historyOwner = payload.author;
     // }
-    populate_titles: (state, titles) => {
 
+    populate_titles: (state, titles) => {
+      state.titles = titles;
     }
   },
   actions: {
@@ -44,19 +42,7 @@ export default {
         titleServices.getTitleHashMatches(payload)
         .then(response => {
           let candidateTitles = response.data;
-          
-          browser.tabs.query({ active: true, currentWindow: true })
-          .then( tabs => {
-            browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
-            title: candidateTitles[0] })
-            .then( (elArr) => {
-           
-              resolve(elArr)
-
-            })
-          })
-          
-          
+          resolve(candidateTitles);
         })
         .catch(err => {
           console.log(err)
@@ -65,6 +51,42 @@ export default {
       })
     },
 
+    findTitlesOnPage: (context, payload) => {
+      return new Promise((resolve, reject) => {
+
+        let candidateTitles = payload.candidateTitlesWSortedCustomTitles;
+        candidateTitles.forEach(candidateTitle => {
+          candidateTitle.uncurlifiedFullText = utils.uncurlify(candidateTitle.text);
+        })
+        
+        browser.tabs.query({ active: true, currentWindow: true })
+        .then( tabs => {
+
+          let allProms = [];
+          let titlesFoundOnPage = [];
+          candidateTitles.forEach(candidateTitle => {
+
+            allProms.push(
+              browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
+              title: candidateTitle })
+              .then( (replacementCount) => {
+                if (replacementCount)
+                  titlesFoundOnPage.push(candidateTitle);
+              })
+            )
+            
+          })
+
+          Promise.all(allProms)
+          .then(() => {
+            context.commit('populate_titles', titlesFoundOnPage); 
+            resolve();
+          })
+
+        })
+
+      })
+    }
     // setPostId: (context, payload) => {
     //   context.commit('set_post_id', payload);
     // },

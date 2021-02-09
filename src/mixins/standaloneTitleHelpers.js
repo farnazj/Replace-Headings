@@ -1,13 +1,14 @@
 import utils from '@/services/utils'
 import consts from '@/services/constants'
 import sourceServices from '@/services/sourceServices'
+import titleServices from '@/services/titleServices'
 import { mapState, mapActions } from 'vuex'
 
 export default {
 
   data: () => {
     return {
-      titleObjects: []
+      // titleObjects: []
     }
   },
   computed: {
@@ -40,7 +41,7 @@ export default {
           for (let i = 0 ; i < str.length ; i++) {
             let strPortion = str.substr(i, consts.LENGTH_TO_HASH);
             if (strPortion.length >= consts.LENGTH_TO_HASH) {
-             allHashes.push(utils.hashCode(utils.uncurlify(strPortion)));
+              allHashes.push(utils.hashCode(utils.uncurlify(strPortion)));
             }
             
           }
@@ -52,48 +53,53 @@ export default {
     },
   
 
-    // arrangeCustomTitles: function(resTitles) {
+    arrangeCustomTitles: function(resTitles) {
 
-    //   this.titleObjects = [];
-    //   let titlesBySetId = {};
+      let titleObjects = [];
+      let titlesBySetId = {};
 
-    //   if (resTitles) {
-    //     resTitles.forEach(title => {
+      console.log('in mixin', resTitles)
+      if (resTitles) {
+        resTitles.forEach(title => {
 
-    //       if (!(title.setId in titlesBySetId )) {
-    //           let titleObj = {};
-    //           titleObj['history'] = [];
-    //           titlesBySetId[title.setId] = titleObj;
-    //       }
+          if (!(title.setId in titlesBySetId )) {
+              let titleObj = {};
+              titleObj['history'] = [];
+              titlesBySetId[title.setId] = titleObj;
+          }
 
-    //       if (title.version != 1) {
-    //         titlesBySetId[title.setId]['history'].push(title);
-    //       }
-    //       else {
-    //         titlesBySetId[title.setId]['lastVersion'] = title;
-    //       }
-    //     })
+          if (title.version != 1) {
+            titlesBySetId[title.setId]['history'].push(title);
+          }
+          else {
+            titlesBySetId[title.setId]['lastVersion'] = title;
+          }
+        })
 
-    //     let allProms = [] ;
-    //     for (const [setId, titleObj] of Object.entries(titlesBySetId)) {
-    //       let titlesetProms = [
-    //         sourceServices.getSourceById(titleObj['lastVersion'].SourceId),
-    //         postServices.hasUserEndorsedTitle({ setId: setId })
-    //       ];
+        let allProms = [] ;
+        for (const [setId, titleObj] of Object.entries(titlesBySetId)) {
+          let titlesetProms = [
+            sourceServices.getSourceById(titleObj['lastVersion'].SourceId),
+            titleServices.hasUserEndorsedTitle({ setId: setId })
+          ];
 
-    //       allProms.push(Promise.all(titlesetProms)
-    //       .then(resp => {
-    //         titlesBySetId[setId]['author'] = resp[0].data;
-    //         titlesBySetId[setId]['userEndorsed'] = resp[1].data;
-    //         this.titleObjects.push(titlesBySetId[setId]);
-    //       }))
+          allProms.push(Promise.all(titlesetProms)
+          .then(resp => {
+            titlesBySetId[setId]['author'] = resp[0].data;
+            titlesBySetId[setId]['userEndorsed'] = resp[1].data;
+            titleObjects.push(titlesBySetId[setId]);
+          }))
 
-    //     }
-    //     return Promise.all(allProms);
-    //   }
+        }
+        return Promise.all(allProms)
+        .then(() => {
+          console.log(titleObjects, 'in mixin')
 
-    //   return Promise.resolve();
-    // },
+          return Promise.resolve(titleObjects);
+        });
+      }
+   
+    },
 
     // ...mapActions({
     //   setPostId(dispatch, payload) {

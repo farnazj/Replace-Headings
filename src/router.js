@@ -6,7 +6,7 @@ import Login from './views/Login.vue'
 // import ForgotPassword from './views/ForgotPassword.vue'
 // import ResetPassword from './views/ResetPassword.vue'
 // import VerifyAccount from './views/VerifyAccount.vue'
-import Sources from './views/Sources.vue'
+import Home from './views/Home.vue'
 // import Settings from './views/Settings.vue'
 // import Profile from './views/Profile.vue'
 // import Invalid from './views/Invalid.vue'
@@ -37,9 +37,9 @@ let router = new Router({
 //       }
 //     },
     {
-      path: '/sources',
-      name: 'sources',
-      component: Sources,
+      path: '/',
+      name: 'home',
+      component: Home,
       meta: {
         requiresAuth: true
       }
@@ -109,7 +109,7 @@ let router = new Router({
     },
     {
       path: '*',
-      component: Sources
+      component: Home
     }
   ]
 })
