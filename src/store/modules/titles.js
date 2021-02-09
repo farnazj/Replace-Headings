@@ -33,6 +33,9 @@ export default {
     //   state.titleHistory= payload.history;
     //   state.historyOwner = payload.author;
     // }
+    populate_titles: (state, titles) => {
+
+    }
   },
   actions: {
 
@@ -40,9 +43,20 @@ export default {
       return new Promise((resolve, reject) => {
         titleServices.getTitleHashMatches(payload)
         .then(response => {
-          console.log('hi')
-          console.log(response.data);
-          resolve(response.data);
+          let candidateTitles = response.data;
+          
+          browser.tabs.query({ active: true, currentWindow: true })
+          .then( tabs => {
+            browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
+            title: candidateTitles[0] })
+            .then( (elArr) => {
+           
+              resolve(elArr)
+
+            })
+          })
+          
+          
         })
         .catch(err => {
           console.log(err)

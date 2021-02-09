@@ -24,16 +24,20 @@ export default {
     created() {
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
-            browser.tabs.sendMessage(tabs[0].id, { type: "getText"})
+            browser.tabs.sendMessage(tabs[0].id, { type: "get_document_innertext" })
             .then( (response) => {
 
-                let allHashes = this.hashPageContent(response.content);
-                console.log(allHashes, 'inja')
-                this.getTitleMatches({titlehashes: allHashes})
+                let allHashes = this.hashPageContent(response);
+                console.log(allHashes)
+             
+                this.getTitleMatches({ titlehashes: allHashes})
                 .then(resp => {
-                    console.log(resp.data)
+                
+                //    browser.tabs.sendMessage(tabs[0].id, { type: "get_dom" })
+                //.then( (response) => {
                 })
-                //$("#text").text(response);
+                
+                
             });
         });
     },

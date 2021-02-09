@@ -33,20 +33,13 @@ export default {
 
     hashPageContent: function(content) {
       
-      let first = true;
       let allHashes = [];
       let contentArr = content.split(/\r\n|\r|\n|\t/);
       contentArr.forEach( (str) => {
-        
-       
         if (str.length >= consts.LENGTH_TO_HASH) {
           for (let i = 0 ; i < str.length ; i++) {
             let strPortion = str.substr(i, consts.LENGTH_TO_HASH);
             if (strPortion.length >= consts.LENGTH_TO_HASH) {
-              if (first) {
-                first = false;
-                console.log('**', strPortion, '**', utils.hashCode(strPortion))
-              }
              allHashes.push(utils.hashCode(utils.uncurlify(strPortion)));
             }
             
