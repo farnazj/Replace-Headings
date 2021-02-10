@@ -7,6 +7,7 @@ import Login from './views/Login.vue'
 // import ResetPassword from './views/ResetPassword.vue'
 // import VerifyAccount from './views/VerifyAccount.vue'
 import Home from './views/Home.vue'
+import CustomTitles from './views/CustomTitles'
 // import Settings from './views/Settings.vue'
 // import Profile from './views/Profile.vue'
 // import Invalid from './views/Invalid.vue'
@@ -19,14 +20,6 @@ let router = new Router({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
-    //{
-//       path: '/',
-//       name: 'home',
-//       component: Home,
-//       meta: {
-//         requiresAuth: true
-//       }
-//     },
 //     {
 //       path: '/posts/:postid',
 //       name: 'singlePost',
@@ -44,23 +37,15 @@ let router = new Router({
         requiresAuth: true
       }
     },
-//     {
-//       path: '/settings',
-//       name: 'settings',
-//       component: Settings,
-//       meta: {
-//         requiresAuth: true
-//       }
-//     },
-//     {
-//       path: '/profile/:username',
-//       name: 'profile',
-//       props: true,
-//       component: Profile,
-//       meta: {
-//         requiresAuth: true
-//       }
-//     },
+    {
+        path: '/custom-titles/:titleId',
+        name: 'customTitles',
+        props: true,
+        component: CustomTitles,
+        meta: {
+          requiresAuth: true
+        }
+    },
     {
       path: '/login',
       name: 'login',

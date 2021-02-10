@@ -1,10 +1,6 @@
 console.log('Hello from the content-script')
-console.log('here')
 
-//console.log(document.querySelector('h1').children[0].innerHTML)
-
-
-var iframe = document.createElement('iframe'); 
+let iframe = document.createElement('iframe'); 
 //iframe.style.background = "salmon";
 iframe.style.height = "100%";
 iframe.style.width = "0px";
@@ -18,24 +14,55 @@ console.log(chrome.extension.getURL("popup.html"))
 
 document.body.appendChild(iframe);
 
-function toggle(){
-    if (iframe.style.width == "0px") {
-        console.log('opening')
-        iframe.style.width="400px";
-    }
-    else {
-        iframe.style.width="0px";
-        console.log('closing')
-    }
-}
+// iframe.style.width = "50px"
+// function toggle(){
+//     if (iframe.style.width == "0px") {
+//         // iframe.style.width="400px";
+//     }
+//     else {
+//         iframe.style.width="0px";
+//         console.log('closing')
+//     }
+// }
 
-toggle()
+// toggle()
+
+
+const targetNode = document.body;
+const config = { attributes: false, childList: true, subtree: true };
+
+const callback = function(mutationsList, observer) {
+    for(const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            console.log('A child node has been added or removed.');
+            browser.runtime.sendMessage({
+                data: "Hello popup, how are you"
+            }).then( (resp) => {
+                console.log(resp);
+            });
+        }
+    }
+};
+
+const observer = new MutationObserver(callback);
+document.addEventListener('DOMContentLoaded', function() {
+    observer.observe(targetNode, config);
+}, false);
+
+
 
 
 browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
 
     console.log(msgObj, sender)
-    if (msgObj.type == 'get_document_innertext') {
+    if (msgObj.type == 'open_sidebar') {
+        console.log('iframe', iframe)
+        iframe.style.width = "400px";
+    }
+    else if (msgObj.type == 'close_sidebar') {
+        iframe.style.width = "0px";
+    }
+    else if (msgObj.type == 'get_document_innertext') {
         let pageContent = document.body.innerText;
         sendResponse(pageContent);
     }
@@ -62,30 +89,39 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         console.log(results)
         let nonScriptResultsCount = 0;
 
+        observer.disconnect();
+
         results.forEach(el => {
             if (el.nodeName != 'SCRIPT') {
+                if (!el.classList.contains('headline-modified')) {
+                    nonScriptResultsCount += 1;
 
-                nonScriptResultsCount += 1;
+                    const originalTitle = el.textContent;
+                    el.textContent = "";
+                    
+                    const newFirstChild = document.createElement('del');
+                    newFirstChild.classList.add('headline-modified');
+                    newFirstChild.appendChild(document.createTextNode(originalTitle));
+    
+                    const newSecondChild = document.createElement('em');
+                    newSecondChild.classList.add('new-alt-headline', `title-${msgObj.title.id}`);
+                    newSecondChild.addEventListener('click', function(ev) {
+                        browser.runtime.sendMessage({
+                            type: 'show_custom_titles',
+                            data: msgObj.title.id
+                        })
+                    })
 
-                const originalTitle = el.textContent;
-                el.textContent = ""
-                
-                const newFirstChild = document.createElement('del');
-                newFirstChild.appendChild(document.createTextNode(originalTitle));
+                    newSecondChild.appendChild(document.createTextNode(' '+ msgObj.title.sortedCustomTitles[0]['lastVersion'].text));
+    
+                    el.appendChild(newFirstChild);
+                    el.appendChild(newSecondChild);
+                }
 
-                const newSecondChild = document.createElement('em');
-                newSecondChild.style.color = '#9E9D24';
-                console.log(msgObj.title.sortedCustomTitles[0]['lastVersion'].text)
-                newSecondChild.appendChild(document.createTextNode( msgObj.title.sortedCustomTitles[0]['lastVersion'].text));
-
-                el.appendChild(newFirstChild)
-                el.appendChild(newSecondChild)
-                // el.insertBefore(document.createElement('br'), newSecondChild)
             }
         })
-        
+        observer.observe(targetNode, config);
         sendResponse(nonScriptResultsCount);
     }
     
-
 });

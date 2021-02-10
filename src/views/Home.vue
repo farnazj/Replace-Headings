@@ -1,18 +1,13 @@
 <template>
     <v-container fluid>
         <custom-toolbar></custom-toolbar>
-
-        <p>
-            This is the home page.
-        </p>
     </v-container>
 </template>
 
 <script>
 import customToolbar from '@/components/CustomToolbar'
 import standaloneTitleHelpers from '@/mixins/standaloneTitleHelpers'
-import utils from '@/services/utils'
-import {mapActions} from 'vuex'
+import { mapState, mapActions } from 'vuex'
 
 export default {
     components: {
@@ -23,47 +18,34 @@ export default {
         }
     },
     created() {
+
+        console.log('home got created')
+
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
-            browser.tabs.sendMessage(tabs[0].id, { type: "get_document_innertext" })
-            .then( (response) => {
+            browser.tabs.sendMessage(tabs[0].id, { type: "close_sidebar" });
+        })
 
-                let allHashes = this.hashPageContent(response);
-                console.log(allHashes)
-             
-                this.getTitleMatches({ titlehashes: allHashes})
-                .then(candidateTitles => {
+        browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+            console.log(message)
+            if (message.type == 'show_custom_titles') {
+                console.log('hiiiii')
+                console.log(message.data)
+                // message.data
 
-                    let allProms = [];
-                    candidateTitles.forEach((candidateTitle, index) => {
-
-                        allProms.push(this.arrangeCustomTitles(candidateTitle.StandaloneCustomTitles)
-                            .then(customTitleObjects => {
-                                console.log(JSON.stringify(customTitleObjects), 'akhar')
-                                candidateTitles[index].sortedCustomTitles = customTitleObjects.slice().sort(utils.compareTitles);
-                            })
-                        )
-                        
-                    })
-
-                    Promise.all(allProms)
-                    .then(() => {
-                        this.findTitlesOnPage({candidateTitlesWSortedCustomTitles: candidateTitles})
-                        .then(res => {
-
-                        })
-                    })
-                
-                })
-
-            });
+                // this.$router.push({ name: 'customTitles' });
+            }
         });
+
+    if (!this.titles.length)
+        this.setUpTitles();
+
+    },
+    computed: {
+        ...mapState('titles', ['titles'])
     },
     methods: {
-        ...mapActions('titles', [
-            'getTitleMatches',
-            'findTitlesOnPage'
-        ])
+        ...mapActions('titles', ['setUpTitles'])
     },
     mixins: [standaloneTitleHelpers]
 }

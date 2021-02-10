@@ -2,7 +2,7 @@
   <v-container fluid>
     <custom-toolbar></custom-toolbar>
 
-    <v-row class="pt-5 full-height" justify="center" align="center" no-gutters fill-height>
+    <v-row class="pt-12 full-height" justify="center" align="center" no-gutters fill-height>
       <v-col xs="10" sm="8" md="6" lg="4">
         <v-alert v-model="alert" type="error">
           {{alertMessage}}
@@ -77,23 +77,30 @@ export default {
       alertMessage: ''
     }
   },
+  created() {
+    console.log('login got created')
+    browser.tabs.query({ active: true, currentWindow: true })
+    .then( tabs => {
+      browser.tabs.sendMessage(tabs[0].id, { type: "open_sidebar" })
+    })
+  },
   methods: {
    login: function() {
-     let username = this.username;
-     let password = this.password;
-     console.log(username, password)
-     this.$router.push('/about');
-     this.$store.dispatch('auth/login',
-      {
-        'username': username,
-        'password': password
-      })
-      .then(() => {
-        this.$router.push('/about');
-      })
-      .catch(err => {
-        this.alertMessage = err.response.data.message;
-        this.alert = true;
+    let username = this.username;
+    let password = this.password;
+
+    this.$router.push('/about');
+    this.$store.dispatch('auth/login',
+    {
+      'username': username,
+      'password': password
+    })
+    .then(() => {
+      this.$router.push({ name: 'home' });
+    })
+    .catch(err => {
+      this.alertMessage = err.response.data.message;
+      this.alert = true;
       })
     },
     goToSignup: function() {
