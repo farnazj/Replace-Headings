@@ -2,26 +2,25 @@ import titleServices from '@/services/titleServices'
 import sourceServices from '@/services/sourceServices'
 import utils from '@/services/utils'
 import consts from '@/services/constants'
+import Vue from 'vue'
 
 export default {
   namespaced: true,
   state() {
     return {
-      // customTitlesVisible: false,
       titles: [],
+      titlesDialogVisible: false,
       historyVisiblity: false,
       titleHistory: [],
-      historyOwner: {}
+      historyOwner: {},
+      titlesFetched: false
     }
   },
   mutations: {
-    // set_post_id: (state, id) => {
-    //   state.postId = id;
-    // },
 
-    // set_titles_visibility: (state, visibility) => {
-    //   state.customTitlesVisible = visibility;
-    // },
+    set_titles_dialog_visibility: (state, visibility) => {
+      state.titlesDialogVisible = visibility;
+    },
 
     set_history_visibility: (state, visiblity) => {
       state.historyVisiblity = visiblity;
@@ -34,8 +33,28 @@ export default {
     // }
 
     populate_titles: (state, titles) => {
-      state.titles = titles;
-    }
+      let replaceMode = false;
+      if (titles.length == 1) {
+        
+        let index = state.titles.findIndex(title => title.id == titles[0].id);
+        if (index !== -1 ) {
+          Vue.set(state.titles, index, titles[0]);
+          replaceMode = true;
+        }
+      }
+      
+      if (!replaceMode)
+        state.titles.push(...titles);
+    },
+
+    remove_from_titles: (state, titleToDelete) => {
+      let index = state.titles.findIndex(title => title.id == titleToDelete.id);
+      state.titles.splice(index, 1);
+    },
+
+    set_titles_fetched_status: (state, payload) => {
+      state.titlesFetched = payload;
+    } 
   },
   actions: {
 
@@ -62,7 +81,6 @@ export default {
       resolve(allHashes);
     })
     },
-  
 
     arrangeCustomTitles: (context, payload) => {
       return new Promise((resolve, reject) => {
@@ -105,8 +123,6 @@ export default {
           }
           Promise.all(allProms)
           .then(() => {
-            console.log(titleObjects, 'in mixin')
-
             resolve(titleObjects);
           });
         }
@@ -115,7 +131,7 @@ export default {
     },
     getTitleMatches: (context, payload) => {
       return new Promise((resolve, reject) => {
-        console.log('payload', payload)
+
         titleServices.getTitleHashMatches(payload)
         .then(response => {
           let candidateTitles = response.data;
@@ -142,26 +158,78 @@ export default {
           let allProms = [];
           let titlesFoundOnPage = [];
           candidateTitles.forEach(candidateTitle => {
-
             allProms.push(
               browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
               title: candidateTitle })
-              .then( (replacementCount) => {
+              .then(replacementCount => {
                 if (replacementCount)
                   titlesFoundOnPage.push(candidateTitle);
               })
             )
-            
           })
 
+          console.log(titlesFoundOnPage, 'titles found on page')
           Promise.all(allProms)
           .then(() => {
-            context.commit('populate_titles', titlesFoundOnPage); 
-            resolve();
+            context.commit('populate_titles', titlesFoundOnPage);
+            if (!titlesFoundOnPage.length) {
+              browser.tabs.sendMessage(tabs[0].id, { type: 'identify_potential_titles' })
+              .then(() => {
+                resolve();  
+              })
+            }
+            else
+              resolve();
+            
           })
 
         })
 
+      })
+    },
+
+    removeTitleFromPage: (context, payload) => {
+      return new Promise((resolve, reject) => {
+        browser.tabs.query({ active: true, currentWindow: true })
+        .then( tabs => {
+
+          browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
+            title: payload.title,
+            remove: true
+          })
+          .then(replacementCount => {
+            context.commit('remove_from_titles', payload.title)
+            resolve();
+          })
+        })
+      })
+
+    },
+
+    sortCustomTitles: (context, payload) => {
+      return new Promise((resolve, reject) => {
+        
+        let standaloneTitlesArr = payload;
+        let allProms = [];
+
+        standaloneTitlesArr.forEach((candidateTitle, index) => {
+          if (typeof candidateTitle.StandaloneCustomTitles !== 'undefined') {
+            allProms.push(context.dispatch('arrangeCustomTitles', { resTitles: candidateTitle.StandaloneCustomTitles })
+            .then(customTitleObjects => {
+              standaloneTitlesArr[index].sortedCustomTitles = customTitleObjects.slice().sort(utils.compareTitles);
+            }))
+          }
+        })
+
+        if (allProms.length) {
+          Promise.all(allProms)
+          .then(() => {
+              resolve(standaloneTitlesArr);
+          })
+        }
+        else
+          resolve([]);
+        
       })
     },
 
@@ -176,74 +244,123 @@ export default {
                 .then( allHashes => {
                   context.dispatch('getTitleMatches', { titlehashes: allHashes })
                   .then(candidateTitles => {
-                    
-                      let allProms = [];
-                      candidateTitles.forEach((candidateTitle, index) => {
-  
-                          allProms.push(context.dispatch('arrangeCustomTitles', {resTitles: candidateTitle.StandaloneCustomTitles})
-                          .then(customTitleObjects => {
-                              candidateTitles[index].sortedCustomTitles = customTitleObjects.slice().sort(utils.compareTitles);
-                          }))
-                          
+                    context.dispatch('sortCustomTitles', candidateTitles)
+                    .then(standaloneTitlesArr => {
+                      context.dispatch('findTitlesOnPage', { candidateTitlesWSortedCustomTitles: standaloneTitlesArr })
+                      .then(res => {
+                        resolve();
                       })
-  
-                      Promise.all(allProms)
-                      .then(() => {
-                          context.dispatch('findTitlesOnPage', {candidateTitlesWSortedCustomTitles: candidateTitles})
-                          .then(res => {
-                            resolve();
-                          })
-                      })
+                    })
                   
                   })
                 })
-             
-         
-
+      
             });
         });
       })
     },
-    
-    // setPostId: (context, payload) => {
-    //   context.commit('set_post_id', payload);
-    // },
 
-    // fetchPostTitles: (context, payload) => {
+    setTitlesDialogVisibility: (context, payload) => {
+      return new Promise((resolve, reject) => {
+        context.commit('set_titles_dialog_visibility', payload);
+        resolve();
+      })
+    },
 
-    //   return new Promise((resolve, reject) => {
+    /*
+    This function is called from the CustomTitles view and adds the newly created custom
+    title to the page (for a headline that did not have custom titles before).
+    or to post an edit. It requests the full StandaloneTitle with its associated CustomTitle 
+    and CustomTitle Endorsers from the server using the title hash, and adds them to the page. 
+    */
+    addTitleToPage: (context, payload) => {
 
-    //     let customTitleReqHeaders = {};
+      return new Promise((resolve, reject) => {
 
-    //     if (payload.namespace == 'profileTitles') {
-    //       let activityUserName = context.rootState['profileArticles/username'];
-    //       customTitleReqHeaders = {
-    //         activityusername: activityUserName
-    //       };
-    //     }
+        let prom = Promise.resolve();
+        if (payload.titleElementId) {
+          prom = browser.tabs.query({ active: true, currentWindow: true })
+            .then( tabs => {
+            browser.tabs.sendMessage(tabs[0].id, { 
+              type: "remove_event_listener_from_title",
+              data: { headlineId: payload.titleElementId }
+            })
+          })
+        }
+        
+        context.dispatch('getTitleMatches', { titlehashes: [payload.hash] })
+        .then(candidateTitles => {
+          context.dispatch('sortCustomTitles', candidateTitles)
+            .then(standaloneTitlesArr => {
+              context.dispatch('findTitlesOnPage', { 
+                candidateTitlesWSortedCustomTitles: standaloneTitlesArr
+              })
+              .then(res => {
+                prom.then(() => {
+                  resolve()
+                });
+              })
+            })
+            
+        })
 
-    //     postServices.getCustomTitlesOfPost({ postId: context.state.postId }, customTitleReqHeaders)
-    //     .then(response => {
-    //       context.dispatch('articleFilters/updateTitles', {
-    //         postId: context.state.postId,
-    //         titles: response.data
-    //       }, { root: true });
-    //       resolve();
-    //     })
-    //   })
-    // },
+      })
+    },
 
-    // setTitlesVisibility: (context, payload) => {
-    //   context.commit('set_titles_visibility', payload);
-    // },
+    modifyCustomTitleInPage: (context, payload) => {
+      return new Promise((resolve, reject) => {
 
-    // populateTitles: (context, payload) => {
-    //   context.commit('populate_titles', payload);
-    // },
+        let activityUserName = context.rootGetters['auth/user'].userName;
+        let customTitleReqHeaders = {
+          activityusername: activityUserName
+        };
+      
+        titleServices.getCustomTitlesOfPost({ postId: payload.postId },
+           customTitleReqHeaders)
+        
+        .then(res => {
+          let candidateTitle = res.data; //an instance of StandaloneTitle
+          context.dispatch('sortCustomTitles', [candidateTitle])
+          .then(standaloneTitlesArr => {
+
+            if (standaloneTitlesArr.length) {
+              context.dispatch('findTitlesOnPage', { 
+                candidateTitlesWSortedCustomTitles: standaloneTitlesArr
+              })
+              .then(res => {
+                resolve()
+              })
+            }
+            else {
+              let titleToRemove = context.state.titles.find(title => title.PostId == payload.postId);
+              context.dispatch('removeTitleFromPage', {
+                title: titleToRemove
+              })
+              .then(() => {
+                resolve()
+              })
+            }
+            
+          })
+          
+        })
+
+      })
+    },
 
     setHistoryVisibility: (context, payload) => {
-      context.commit('set_history_visibility', payload);
+      return new Promise((resolve, reject) => {
+        context.commit('set_history_visibility', payload);
+        resolve();
+      })
     },
+
+    setTitlesFetched: (context, payload) => {
+      return new Promise((resolve, reject) => {
+        context.commit('set_titles_fetched_status', payload);
+        resolve();
+      })
+    }
 
     // populateTitleHistory: (context, payload) => {
     //   context.commit('populate_title_history', payload);

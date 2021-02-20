@@ -5,3 +5,33 @@
     text-decoration-line: underline;
     color: #9E9D24;
 }
+
+.headline-modified {
+
+}
+
+.extension-side-bar {
+    height: 100%;
+    width: 400px;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    z-index: 90000;
+    border: none;
+}
+
+.extension-hidden {
+    display: none !important;
+}
+
+.extension-dialog {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0px;
+    z-index: 90000;
+}
+
+.body-no-scroll {
+    overflow: hidden !important;
+}

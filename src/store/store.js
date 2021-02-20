@@ -4,6 +4,7 @@ import auth from './modules/auth'
 import relatedSources from './modules/relatedSources'
 import sourceLists from './modules/sourceLists'
 import titles from './modules/titles'
+import pageDetails from './modules/pageDetails'
 
 Vue.use(Vuex)
 
@@ -24,7 +25,8 @@ let store = new Vuex.Store({
     auth,
     relatedSources,
     sourceLists,
-    titles
+    titles,
+    pageDetails
   }
 })
 
