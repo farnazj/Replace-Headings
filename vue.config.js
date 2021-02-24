@@ -24,9 +24,8 @@ module.exports = {
         },
         contentScripts: {
           entries: {
-            'content-script': [
-              'src/content-scripts/content-script.js'
-            ]
+            'helpers': 'src/content-scripts/helpers.js',
+            'content-script': 'src/content-scripts/content-script.js'
           }
         }
       }

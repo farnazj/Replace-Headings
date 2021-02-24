@@ -148,9 +148,9 @@ export default {
       return new Promise((resolve, reject) => {
 
         let candidateTitles = payload.candidateTitlesWSortedCustomTitles;
-        candidateTitles.forEach(candidateTitle => {
-          candidateTitle.uncurlifiedFullText = utils.uncurlify(candidateTitle.text);
-        })
+        // candidateTitles.forEach(candidateTitle => {
+        //   candidateTitle.uncurlifiedFullText = utils.uncurlify(candidateTitle.text);
+        // })
         
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
