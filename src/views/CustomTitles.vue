@@ -42,7 +42,7 @@
 
         <v-row no-gutters justify="end">
             <v-card-actions >
-              <v-btn outlined small color="primary" @click="postNewTitle">Submit</v-btn>
+              <v-btn :disabled="postBtnDisabled" outlined small color="primary" @click="postNewTitle">Submit</v-btn>
             </v-card-actions>
         </v-row>
 
@@ -164,6 +164,7 @@ export default {
    data: () => {
        return {
             newTitle: '',
+            postBtnDisabled: false,
             edit: {
                 on: false,
                 setId: null,
@@ -236,37 +237,41 @@ export default {
         },
         postNewTitle: function() {
             if (this.$refs.newTitleForm.validate()) {
+                this.postBtnDisabled = true;
 
-            let pageIndentifiedTitle = this.titleId ? this.associatedStandaloneTitle.text :
-                this.titleText;
-            titleServices.postCustomTitle({ 
-                postId: this.associatedStandaloneTitle ? this.associatedStandaloneTitle.PostId : null,
-                postUrl: this.url,
-                customTitleText: this.newTitle,
-                pageIndentifiedTitle: pageIndentifiedTitle })
-            .then(res => {
-                this.newTitle = '';
-                this.$refs.newTitleForm.resetValidation();
-                this.addTitleToPage({
-                    hash: res.data.data.hash,
-                    titleElementId: this.titleElementId
-                })
-                .then(() => {
-                    this.$router.push({ name: 'customTitles',  
-                        params: { 
-                            titleId: res.data.data.id
-                        }
+                let pageIndentifiedTitle = this.titleId ? this.associatedStandaloneTitle.text :
+                    this.titleText;
+                titleServices.postCustomTitle({ 
+                    postId: this.associatedStandaloneTitle ? this.associatedStandaloneTitle.PostId : null,
+                    postUrl: this.url,
+                    customTitleText: this.newTitle,
+                    pageIndentifiedTitle: pageIndentifiedTitle })
+                .then(res => {
+                    this.newTitle = '';
+                    this.$refs.newTitleForm.resetValidation();
+                    this.addTitleToPage({
+                        hash: res.data.data.hash,
+                        titleElementId: this.titleElementId
                     })
-                    .catch(err => {
-                        console.log(err);
+                    .then(() => {
+                        this.$router.push({ name: 'customTitles',  
+                            params: { 
+                                titleId: res.data.data.id
+                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        })
                     })
                 })
-            })
-            .catch(err => {
-                console.log(err)
-                this.alertMessage = err.response.data.message;
-                this.alert = true;
-            })
+                .catch(err => {
+                    console.log(err)
+                    this.alertMessage = err.response.data.message;
+                    this.alert = true;
+                })
+                .finally(() => {
+                    this.postBtnDisabled = false;
+                })
             }
         },
     changeEndorsement: function(titleObj, arrIndex, endorsementVal) {

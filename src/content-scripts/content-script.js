@@ -32,7 +32,7 @@ const callback = throttle(function(mutationsList, observer) {
             console.log(resp);
         });
     }
-}, 500);
+}, 5000);
 
 const observer = new MutationObserver(callback);
 document.addEventListener('DOMContentLoaded', function() {
@@ -52,6 +52,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         iframe.classList.add('extension-hidden');
     }
     else if (msgObj.type == 'open_custom_titles') {
+        observer.disconnect();
         iframe.classList.remove('extension-side-bar');
         iframe.classList.remove('extension-hidden');
         iframe.classList.add('extension-dialog');
@@ -61,6 +62,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     else if (msgObj.type == 'close_custom_titles') {
         iframe.classList.remove('extension-dialog');
         document.body.classList.remove('body-no-scroll');
+        observer.observe(targetNode, config);
     }
     else if (msgObj.type == 'get_document_innertext') {
         let pageContent = document.body.innerText;
@@ -72,6 +74,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     else if (msgObj.type == 'find_and_replace_title') {
 
         let results = globalHelper.getElementsContainingText(msgObj.title.text);
+
+        console.log('results of els', results)
         let nonScriptResultsCount = 0;
 
         observer.disconnect();
@@ -80,6 +84,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
             console.log(el, 'element')
             if (el.nodeName != 'SCRIPT') {
                 nonScriptResultsCount += 1;
+
+                console.log('element found')
 
                 //if headline has not been modified yet
                 if (!el.classList.contains('headline-modified')) {
@@ -115,7 +121,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
                                 type: 'direct_to_custom_titles',
                                 data: {
                                     titleText: headlineContainer.textContent,
-                                    titleElementId: headlineContainer.getAttribute('data-headline-id')
+                                    titleElementId: headlineContainer.getAttribute('data-headline-id'),
+                                    titleId: null
                                 }
                             })
 
@@ -138,7 +145,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         let elResults;
         try {
             let ogTitle = globalHelper.htmlDecode(document.querySelector('meta[property="og:title"]').getAttribute('content'));
-            elResults = globalHelper.getElementsContainingText(ogTitle).filter(el => el.nodeName != 'SCRIPT');
+            elResults = globalHelper.getElementsContainingText(ogTitle).filter(el => !(['SCRIPT', 'TITLE'].includes(el.nodeName)));
+            console.log(elResults)
         }
         catch(err) {
             console.log('in og:title, error is', err)
@@ -147,7 +155,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         try {
             if (!elResults.length) {
                 let twitterTitle = globalHelper.htmlDecode(document.querySelector('meta[name="twitter:title"]').getAttribute('content'));
-                elResults = globalHelper.getElementsContainingText(twitterTitle).filter(el => el.nodeName != 'SCRIPT');
+                elResults = globalHelper.getElementsContainingText(twitterTitle).filter(el => !(['SCRIPT', 'TITLE'].includes(el.nodeName)));
+                console.log(elResults)
             }
         }
         catch(err) {
@@ -159,6 +168,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         }
     
         elResults.forEach(heading => {
+            console.log('title found', heading, heading.nodeName)
             
             globalHelper.acceptInputOnHeadline(heading)
         })
@@ -168,7 +178,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     }
     else if (msgObj.type == 'remove_event_listener_from_title') {
         let heading = document.querySelector(`[data-headline-id="${msgObj.data.headlineId}"]`);
-        heading.removeEventListener('click', openCustomTitlesDialog);
+        heading.removeEventListener('click', globalHelper.openCustomTitlesDialog);
         heading.classList.remove('headline-clickable');
     }
     

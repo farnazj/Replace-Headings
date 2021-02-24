@@ -9,7 +9,7 @@ export default {
     })
   },
   setEndorsementStatus(params, reqBody) {
-    return Api().post('/custom-title-endorsement/' + params.setId,
+    return Api().post('/custom-title-endorsement/user/' + params.setId,
     reqBody, {
       withCredentials: true
     })

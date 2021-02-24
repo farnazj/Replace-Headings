@@ -44,27 +44,28 @@ class Helper {
     
     getElementsContainingText(text) {
         let xpath, query;
-        console.log('this', this)
         let uncurlifiedText = this.uncurlify(text);
-    
+
+        let results = [];
+
         try {
             xpath = `//*[contains(text(), "${text}") or contains(text(), "${uncurlifiedText}")]`;
             query = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);    
         }
         catch (error) {
+            console.log('error khord', error)
             if (error.name == 'DOMException') {
                 xpath = `//*[contains(text(), '${text}') or contains(text(), '${uncurlifiedText}')]`;
                 query = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);  
             }
         }
-    
-        let results = [];
+        
+        console.log(query.snapshotLength)
     
         for (let i = 0, length = query.snapshotLength; i < length; ++i) {
             results.push(query.snapshotItem(i));
         }
     
-        console.log(results)
         return results;
     }
 
