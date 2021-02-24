@@ -1,10 +1,6 @@
 console.log('Hello from the content-script');
 
-let openCustomTitlesDialog = globalHelper.openCustomTitlesDialog;
-let addAltTitleNodeToHeadline = globalHelper.addAltTitleNodeToHeadline;
-let htmlDecode = globalHelper.htmlDecode;
-let getElementsContainingText = globalHelper.getElementsContainingText;
-
+let throttle = globalHelper.throttle;
 
 let iframe = document.createElement('iframe');
 iframe.classList.add('extension-side-bar', 'extension-hidden');
@@ -17,18 +13,26 @@ document.body.appendChild(iframe);
 const targetNode = document.body;
 const config = { attributes: false, childList: true, subtree: true };
 
-const callback = function(mutationsList, observer) {
+const callback = throttle(function(mutationsList, observer) {
+    console.log('going to execute callback **')
+    let childMutation = false;
     for(const mutation of mutationsList) {
         if (mutation.type === 'childList') {
-            console.log('A child node has been added or removed.');
-            browser.runtime.sendMessage({
-                data: "Hello popup, how are you"
-            }).then( (resp) => {
-                console.log(resp);
-            });
+            childMutation = true;
         }
     }
-};
+    if (childMutation) {
+        console.log('A child node has been added or removed.');
+        observer.takeRecords();
+        observer.disconnect();
+        browser.runtime.sendMessage({
+            data: "Hello popup, how are you",
+            type: 'fetch_titles'
+        }).then( (resp) => {
+            console.log(resp);
+        });
+    }
+}, 500);
 
 const observer = new MutationObserver(callback);
 document.addEventListener('DOMContentLoaded', function() {
@@ -52,6 +56,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         iframe.classList.remove('extension-hidden');
         iframe.classList.add('extension-dialog');
         document.body.classList.add('body-no-scroll');
+
     }
     else if (msgObj.type == 'close_custom_titles') {
         iframe.classList.remove('extension-dialog');
@@ -66,7 +71,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     }
     else if (msgObj.type == 'find_and_replace_title') {
 
-        let results = getElementsContainingText(msgObj.title.text);
+        let results = globalHelper.getElementsContainingText(msgObj.title.text);
         let nonScriptResultsCount = 0;
 
         observer.disconnect();
@@ -81,12 +86,12 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
 
                     const originalTitle = el.textContent;
                     el.textContent = "";
-                    
-                    const newFirstChild = document.createElement('del');
-                    newFirstChild.classList.add('headline-modified');
-                    newFirstChild.appendChild(document.createTextNode(originalTitle));
+                    let newFirstChild = globalHelper.addAltTitleNodeToHeadline(msgObj.title)
+
+                    const newSecondChild = document.createElement('del');
+                    newSecondChild.classList.add('headline-modified');
+                    newSecondChild.appendChild(document.createTextNode(originalTitle));
     
-                    let newSecondChild = addAltTitleNodeToHeadline(msgObj.title)
     
                     el.appendChild(newFirstChild);
                     el.appendChild(newSecondChild);
@@ -96,18 +101,28 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
                     let headlineContainer = el.parentNode;
 
                     if (headlineContainer.children.length == 2) {
-                        headlineContainer.removeChild(headlineContainer.children[1]);
+                        headlineContainer.removeChild(headlineContainer.children[0]);
                         if (msgObj.remove == true) {
                             headlineContainer.appendChild(document.createTextNode(headlineContainer.children[0].textContent));
                             headlineContainer.removeChild(headlineContainer.children[0]);
 
-                            headlineContainer.setAttribute('data-headline-id', Math.random().toString(36).substring(2, 15));
-                            headlineContainer.addEventListener('click', openCustomTitlesDialog )
+                            globalHelper.acceptInputOnHeadline(headlineContainer)
+
+                            /*
+                            manually redirecting to the headline view with the correct params (the dialog that is open now corresponds to a view that has titleId as a param. And that titleId along with its corresponding standaloneTitle has been deleted from the store and no longer exists)
+                            */
+                            browser.runtime.sendMessage({
+                                type: 'direct_to_custom_titles',
+                                data: {
+                                    titleText: headlineContainer.textContent,
+                                    titleElementId: headlineContainer.getAttribute('data-headline-id')
+                                }
+                            })
 
                         }
                         else {
-                            let newSecondChild = addAltTitleNodeToHeadline(msgObj.title)
-                            headlineContainer.appendChild(newSecondChild)
+                            let newFirstChild = globalHelper.addAltTitleNodeToHeadline(msgObj.title)
+                            headlineContainer.insertBefore(newFirstChild, headlineContainer.children[0])
                         }
                         
                     }
@@ -122,8 +137,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
 
         let elResults;
         try {
-            let ogTitle = htmlDecode(document.querySelector('meta[property="og:title"]').getAttribute('content'));
-            elResults = getElementsContainingText(ogTitle).filter(el => el.nodeName != 'SCRIPT');
+            let ogTitle = globalHelper.htmlDecode(document.querySelector('meta[property="og:title"]').getAttribute('content'));
+            elResults = globalHelper.getElementsContainingText(ogTitle).filter(el => el.nodeName != 'SCRIPT');
         }
         catch(err) {
             console.log('in og:title, error is', err)
@@ -131,8 +146,8 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
 
         try {
             if (!elResults.length) {
-                let twitterTitle = htmlDecode(document.querySelector('meta[name="twitter:title"]').getAttribute('content'));
-                elResults = getElementsContainingText(twitterTitle).filter(el => el.nodeName != 'SCRIPT');
+                let twitterTitle = globalHelper.htmlDecode(document.querySelector('meta[name="twitter:title"]').getAttribute('content'));
+                elResults = globalHelper.getElementsContainingText(twitterTitle).filter(el => el.nodeName != 'SCRIPT');
             }
         }
         catch(err) {
@@ -140,39 +155,22 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         }
 
         if (!elResults.length) {
-            let twitterTitle = htmlDecode(document.querySelector('meta[name="twitter:title"]').getAttribute('content'));
-            elResults = getElementsContainingText(twitterTitle).filter(el => el.nodeName != 'SCRIPT');
-        }
-
-        if (!elResults.length) {
             elResults = document.querySelectorAll('h1');
         }
     
         elResults.forEach(heading => {
-            console.log(heading, 'identified heading')
-            heading.setAttribute('data-headline-id', Math.random().toString(36).substring(2, 15));
-            heading.addEventListener('click', openCustomTitlesDialog )
+            
+            globalHelper.acceptInputOnHeadline(heading)
         })
 
-        
-/*
-        find any element on the page that has a textContent with that contains
-        either one
-        if not found, find all h1
-
-        */
-
-        // let headings = document.querySelectorAll('h1');
-
-        // headings.forEach(heading => {
-        //     heading.setAttribute('data-headline-id', Math.random().toString(36).substring(2, 15));
-        //     heading.addEventListener('click', openCustomTitlesDialog )
-        // })
+        observer.observe(targetNode, config);
 
     }
     else if (msgObj.type == 'remove_event_listener_from_title') {
         let heading = document.querySelector(`[data-headline-id="${msgObj.data.headlineId}"]`);
         heading.removeEventListener('click', openCustomTitlesDialog);
+        heading.classList.remove('headline-clickable');
     }
+    
     
 });

@@ -7,7 +7,7 @@
 }
 
 .headline-modified {
-
+    font-size: 70%;
 }
 
 .extension-side-bar {
@@ -34,4 +34,8 @@
 
 .body-no-scroll {
     overflow: hidden !important;
+}
+
+.headline-clickable {
+    cursor: pointer;
 }

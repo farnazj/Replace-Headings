@@ -1,13 +1,11 @@
 <template>
-    <hello-world></hello-world>
+    <p>This is an about page</p>
 </template>
 
 <script>
-import helloWorld from '@/components/HelloWorld';
 
 export default {
     components: {
-        'hello-world': helloWorld
     },
     data() {
         return {

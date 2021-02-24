@@ -1,7 +1,7 @@
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
 import '@fortawesome/fontawesome-free/css/all.css'
 // import '@mdi/font/css/materialdesignicons.css'
-// import './assets/css/main.css'
+import '@/assets/popup.css'
 import Vue from 'vue'
 import App from './App.vue'
 import router from '@/router'

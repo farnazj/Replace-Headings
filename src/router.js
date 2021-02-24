@@ -73,14 +73,6 @@ let router = new Router({
 //       props: true,
 //       component: VerifyAccount
 //     },
-//     {
-//       path: '/invalid',
-//       name: 'invalid',
-//       component: Invalid,
-//       meta: {
-//         requiresAuth: true
-//       }
-//     },
     {
       path: '/about',
       name: 'about',

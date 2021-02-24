@@ -36,6 +36,14 @@ export default {
 
         })
 
+        /*
+        when there's at least one alt title for the headline, titleId (the id of the associated
+        StandaloneTitle) is not null and inside CustomTitles, this associated title which has a
+        corresponding PostId is used to send/edit/delete titles.
+        In the absence of any alt titles, titleId is null, and the two fields titleText (the exact
+        text of the original heading) and titleElementId (a unique id given by content script to 
+        the element containing the headline -- later used for fetching the element of and modifying the headline )
+        */
         browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             console.log(message)
             if (message.type == 'direct_to_custom_titles') {
@@ -53,6 +61,12 @@ export default {
                     .catch(err => {
                         console.log(err);
                     })
+                })
+            }
+            if (message.type == 'fetch_titles') {
+                thisRef.setUpTitles()
+                .then(() => {
+                    console.log('titles set up')
                 })
             }
         });
