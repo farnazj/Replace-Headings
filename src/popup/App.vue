@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import Fuse from 'fuse.js'
 
 export default {
   name: 'App'

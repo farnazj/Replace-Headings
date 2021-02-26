@@ -24,6 +24,7 @@ module.exports = {
         },
         contentScripts: {
           entries: {
+            'fuse': 'src/content-scripts/fuse.js',
             'helpers': 'src/content-scripts/helpers.js',
             'content-script': 'src/content-scripts/content-script.js'
           }

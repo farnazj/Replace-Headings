@@ -1,5 +1,8 @@
-
 class Helper {
+    constructor() {
+        this.fuse = null;
+        this.fuzzyScoreThreshold = 0.77;
+    }
 
     openCustomTitlesDialog(ev) {
         browser.runtime.sendMessage({
@@ -43,6 +46,7 @@ class Helper {
     
     
     getElementsContainingText(text) {
+
         let xpath, query;
         let uncurlifiedText = this.uncurlify(text);
 
@@ -59,14 +63,37 @@ class Helper {
                 query = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);  
             }
         }
-        
-        console.log(query.snapshotLength)
-    
+            
         for (let i = 0, length = query.snapshotLength; i < length; ++i) {
             results.push(query.snapshotItem(i));
         }
     
         return results;
+    }
+
+    getFuzzyTextSimilarToHeading(serverReturnedTitleText) {
+
+        let pageContent = document.body.innerText.split('\n');
+        const options = {
+            includeScore: true,
+            distance: 150
+        }
+        let Fuse = this.fuse;
+       
+        const fuse = new Fuse(pageContent, options)
+        let uncurlifiedText = this.uncurlify(serverReturnedTitleText);
+
+        let texts = uncurlifiedText != serverReturnedTitleText ? [uncurlifiedText, serverReturnedTitleText] : [serverReturnedTitleText];
+        
+        let finalResults = [], tempResults = [];
+        for (let text of texts) {
+            tempResults = fuse.search(text);
+            if (!finalResults.includes(tempResults[0]))
+                finalResults.push(tempResults[0]);
+        }
+        
+        console.log('fuzzy search all results were', tempResults, this.fuzzyScoreThreshold, finalResults[0])
+        return finalResults[0].score <= this.fuzzyScoreThreshold ? finalResults[0].item : null;
     }
 
     debounce(func, wait, immediate) {
@@ -105,6 +132,11 @@ class Helper {
         headlineContainer.addEventListener('click', this.openCustomTitlesDialog )
         headlineContainer.classList.add('headline-clickable');
     }
+
+    setFuse (fuse) {
+        this.fuse = fuse;
+    }
 }
+
 
 globalHelper = new Helper();

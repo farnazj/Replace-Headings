@@ -1,13 +1,13 @@
 console.log('Hello from the content-script');
+import Fuse from 'fuse.js'
 
 let throttle = globalHelper.throttle;
 
 let iframe = document.createElement('iframe');
 iframe.classList.add('extension-side-bar', 'extension-hidden');
 iframe.src = chrome.extension.getURL("popup.html")
-console.log(chrome.extension.getURL("popup.html"))
-
 document.body.appendChild(iframe);
+
 
 
 const targetNode = document.body;
@@ -36,13 +36,16 @@ const callback = throttle(function(mutationsList, observer) {
 
 const observer = new MutationObserver(callback);
 document.addEventListener('DOMContentLoaded', function() {
-    observer.observe(targetNode, config);
+    observer.observe(targetNode, config);    
 }, false);
 
+
+globalHelper.setFuse(Fuse);
 
 browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
 
     console.log(msgObj, sender)
+ 
     if (msgObj.type == 'open_sidebar') {
         iframe.classList.remove('extension-hidden');
         if (!iframe.classList.contains('extension-side-bar'))
@@ -76,6 +79,12 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         let results = globalHelper.getElementsContainingText(msgObj.title.text);
 
         console.log('results of els', results)
+        if (!results.length) {
+            let similarText = globalHelper.getFuzzyTextSimilarToHeading(msgObj.title.text);
+            if (similarText)
+                results = globalHelper.getElementsContainingText(similarText);
+        }
+
         let nonScriptResultsCount = 0;
 
         observer.disconnect();

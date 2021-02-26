@@ -172,14 +172,14 @@ export default {
           Promise.all(allProms)
           .then(() => {
             context.commit('populate_titles', titlesFoundOnPage);
-            if (!titlesFoundOnPage.length) {
+            // if (!titlesFoundOnPage.length) {
               browser.tabs.sendMessage(tabs[0].id, { type: 'identify_potential_titles' })
               .then(() => {
                 resolve();  
               })
-            }
-            else
-              resolve();
+            
+            // else
+            //   resolve();
             
           })
 
