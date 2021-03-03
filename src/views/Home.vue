@@ -7,7 +7,7 @@
 <script>
 import customToolbar from '@/components/CustomToolbar'
 import standaloneTitleHelpers from '@/mixins/standaloneTitleHelpers'
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
     components: {
@@ -24,7 +24,6 @@ export default {
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
             browser.tabs.sendMessage(tabs[0].id, { type: 'close_sidebar' });
-            console.log(this.url, 'avalesh url')
             if (!this.url)
             {
                 browser.tabs.sendMessage(tabs[0].id, { type: 'get_page_url' })    
@@ -33,7 +32,6 @@ export default {
                     this.setUpPageUrl(pageUrl);
                 })
             }
-
         })
 
         /*
@@ -71,8 +69,6 @@ export default {
             }
         });
     
-  
-        
 
     if (!this.titles.length && !this.titlesFetched ) {
         this.setUpTitles()
@@ -80,8 +76,12 @@ export default {
             this.setTitlesFetched(true);
         })
     }
-        
 
+    if (!this.followedSources.length)
+        this.fetchFollows();
+    if (!this.trustedSources.length)
+        this.fetchTrusteds();
+        
     },
     computed: {
         ...mapState('titles', [
@@ -90,6 +90,15 @@ export default {
         ]),
         ...mapState('pageDetails', [
             'url'
+        ]),
+        ...mapState('relatedSources', [
+            'followedSources',
+            'trustedSources',
+        ]),
+        ...mapGetters('relatedSources', [
+            'followedOrTrusteds',
+            'trustedIds',
+            'followedIds'
         ])
     },
     methods: {
@@ -100,6 +109,10 @@ export default {
         ]),
         ...mapActions('pageDetails', [
             'setUpPageUrl'
+        ]),
+        ...mapActions('relatedSources', [
+            'fetchFollows',
+            'fetchTrusteds'
         ])
     },
     mixins: [standaloneTitleHelpers]

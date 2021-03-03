@@ -10,6 +10,7 @@ export default {
   getters: {
 
     isLoggedIn: (state) => {
+      console.log(state.token, !!state.token, 'islogged in')
       return !!state.token;
     },
     authStatus: (state) => {
@@ -17,6 +18,7 @@ export default {
     },
     user: (state) => {
 
+      console.log('user', state.token)
       if (Object.entries(state.token).length)
         return state.token;
       else {

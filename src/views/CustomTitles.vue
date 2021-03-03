@@ -309,15 +309,14 @@ export default {
       }
 
       titleServices.deleteCustomTitle({
-        postId: this.associatedStandaloneTitle.PostId,
+        standaloneTitleId: this.associatedStandaloneTitle.id,
         setId: this.delete.selectedTitle.lastVersion.setId
       })
       .then(res => {
         this.delete.selectedTitle = null;
         // this.fetchPostTitles();
         this.modifyCustomTitleInPage({
-            // hash: this.associatedStandaloneTitle.hash,
-            postId: this.associatedStandaloneTitle.PostId
+            standaloneTitleId: this.associatedStandaloneTitle.id
         })
         
       })
@@ -344,7 +343,7 @@ export default {
         if (this.$refs.editTitleForm[index].validate()) {
 
             titleServices.editCustomTitle({
-                postId: this.associatedStandaloneTitle.PostId,
+                standaloneTitleId: this.associatedStandaloneTitle.id,
                 setId: this.edit.setId
             }, { text: this.edit.text })
             .then(res => {
@@ -353,8 +352,7 @@ export default {
                 this.$refs.editTitleForm[index].resetValidation();
                 //   this.fetchPostTitles();
                 this.modifyCustomTitleInPage({
-                    // hash: this.associatedStandaloneTitle.hash,
-                    postId: this.associatedStandaloneTitle.PostId
+                    standaloneTitleId: this.associatedStandaloneTitle.id
                 })
             })
             .catch(err => {

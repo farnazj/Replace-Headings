@@ -9,7 +9,6 @@ iframe.src = chrome.extension.getURL("popup.html")
 document.body.appendChild(iframe);
 
 
-
 const targetNode = document.body;
 const config = { attributes: false, childList: true, subtree: true };
 
@@ -47,6 +46,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     console.log(msgObj, sender)
  
     if (msgObj.type == 'open_sidebar') {
+        console.log('inja')
         iframe.classList.remove('extension-hidden');
         if (!iframe.classList.contains('extension-side-bar'))
             iframe.classList.add('extension-side-bar');
@@ -77,6 +77,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     else if (msgObj.type == 'find_and_replace_title') {
 
         let results = globalHelper.getElementsContainingText(msgObj.title.text);
+        results = results.filter(el => !(['SCRIPT', 'TITLE'].includes(el.nodeName)));
 
         console.log('results of els', results)
         if (!results.length) {
@@ -176,9 +177,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
             elResults = document.querySelectorAll('h1');
         }
     
-        elResults.forEach(heading => {
-            console.log('title found', heading, heading.nodeName)
-            
+        elResults.forEach(heading => {            
             globalHelper.acceptInputOnHeadline(heading)
         })
 

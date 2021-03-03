@@ -68,7 +68,8 @@ export default {
         if (str.length >= consts.LENGTH_TO_HASH) {
           for (let i = 0 ; i < str.length ; i++) {
             let strPortion = str.substr(i, consts.LENGTH_TO_HASH);
-            if (strPortion.length >= consts.LENGTH_TO_HASH) {
+
+            if (strPortion.length >= consts.LENGTH_TO_HASH) {     
               allHashes.push(utils.hashCode(utils.uncurlify(strPortion)));
             }
             
@@ -148,10 +149,7 @@ export default {
       return new Promise((resolve, reject) => {
 
         let candidateTitles = payload.candidateTitlesWSortedCustomTitles;
-        // candidateTitles.forEach(candidateTitle => {
-        //   candidateTitle.uncurlifiedFullText = utils.uncurlify(candidateTitle.text);
-        // })
-        
+
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
 
@@ -193,6 +191,7 @@ export default {
         browser.tabs.query({ active: true, currentWindow: true })
         .then( tabs => {
 
+          console.log(payload, 'inja tu remove')
           browser.tabs.sendMessage(tabs[0].id, { type: "find_and_replace_title",
             title: payload.title,
             remove: true
@@ -315,7 +314,7 @@ export default {
           activityusername: activityUserName
         };
       
-        titleServices.getCustomTitlesOfPost({ postId: payload.postId },
+        titleServices.getCustomTitlesOfstandaloneTitle({ standaloneTitleId: payload.standaloneTitleId },
            customTitleReqHeaders)
         
         .then(res => {
@@ -332,7 +331,7 @@ export default {
               })
             }
             else {
-              let titleToRemove = context.state.titles.find(title => title.PostId == payload.postId);
+              let titleToRemove = context.state.titles.find(title => title.id == payload.standaloneTitleId);
               context.dispatch('removeTitleFromPage', {
                 title: titleToRemove
               })

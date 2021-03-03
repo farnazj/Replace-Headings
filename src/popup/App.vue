@@ -6,9 +6,18 @@
 
 <script>
 import Fuse from 'fuse.js'
+import { mapActions } from 'vuex';
 
 export default {
-  name: 'App'
+  name: 'App',
+  created() {
+    // this.logout();
+  },
+  methods: {
+    ...mapActions('auth', [
+      'logout'
+    ])
+  }
 }
 </script>
 

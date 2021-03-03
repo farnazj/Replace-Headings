@@ -86,7 +86,10 @@ let router = new Router({
     },
     {
       path: '*',
-      component: Home
+      component: Home,
+      meta: {
+        requiresAuth: true
+      }
     }
   ]
 })
@@ -98,8 +101,14 @@ router.beforeEach((to, from, next) => {
       window.scrollTo(0, 0);
       return;
     }
-    else
-        next('/login');
+    else {
+      next('/login');
+      // browser.tabs.query({ active: true, currentWindow: true })
+      // .then( tabs => {
+      //     browser.tabs.sendMessage(tabs[0].id, { type: 'open_sidebar' });
+      // })
+    }
+        
   } else {
     next();
   }

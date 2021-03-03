@@ -18,6 +18,8 @@ class Helper {
         const newEl = document.createElement('em');
         newEl.classList.add('new-alt-headline', `title-${altTitle.id}`);
         newEl.addEventListener('click', function(ev) {
+            ev.preventDefault();
+
             browser.runtime.sendMessage({
                 type: 'direct_to_custom_titles',
                 data: {
