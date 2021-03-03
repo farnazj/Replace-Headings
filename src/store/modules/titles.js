@@ -34,6 +34,8 @@ export default {
 
     populate_titles: (state, titles) => {
       let replaceMode = false;
+
+      console.log(titles, 'hereeee')
       if (titles.length == 1) {
         
         let index = state.titles.findIndex(title => title.id == titles[0].id);

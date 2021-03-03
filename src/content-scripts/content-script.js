@@ -27,8 +27,6 @@ const callback = throttle(function(mutationsList, observer) {
         browser.runtime.sendMessage({
             data: "Hello popup, how are you",
             type: 'fetch_titles'
-        }).then( (resp) => {
-            console.log(resp);
         });
     }
 }, 5000);
@@ -46,7 +44,6 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     console.log(msgObj, sender)
  
     if (msgObj.type == 'open_sidebar') {
-        console.log('inja')
         iframe.classList.remove('extension-hidden');
         if (!iframe.classList.contains('extension-side-bar'))
             iframe.classList.add('extension-side-bar');
@@ -91,11 +88,10 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
         observer.disconnect();
 
         results.forEach(el => {
-            console.log(el, 'element')
             if (el.nodeName != 'SCRIPT') {
                 nonScriptResultsCount += 1;
 
-                console.log('element found')
+                console.log('element found', el)
 
                 //if headline has not been modified yet
                 if (!el.classList.contains('headline-modified')) {
@@ -152,7 +148,7 @@ browser.runtime.onMessage.addListener( (msgObj, sender, sendResponse) => {
     }
     else if (msgObj.type == 'identify_potential_titles') {
 
-        let elResults;
+        let elResults = [];
         try {
             let ogTitle = globalHelper.htmlDecode(document.querySelector('meta[property="og:title"]').getAttribute('content'));
             elResults = globalHelper.getElementsContainingText(ogTitle).filter(el => !(['SCRIPT', 'TITLE'].includes(el.nodeName)));

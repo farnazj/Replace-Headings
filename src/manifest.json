@@ -32,6 +32,10 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
+      "exclude_globs": [ 
+        "http://trustnet.csail.mit.edu",
+        "https://trustnet.csail.mit.edu"
+       ],
       "js": ["js/fuse.js", "js/helpers.js", "js/content-script.js"],
       "css": ["css/content-script.css"]
     }

@@ -6,7 +6,6 @@
 
 <script>
 import customToolbar from '@/components/CustomToolbar'
-import standaloneTitleHelpers from '@/mixins/standaloneTitleHelpers'
 import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -114,7 +113,6 @@ export default {
             'fetchFollows',
             'fetchTrusteds'
         ])
-    },
-    mixins: [standaloneTitleHelpers]
+    }
 }
 </script>
